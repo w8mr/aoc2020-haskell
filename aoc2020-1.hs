@@ -1,17 +1,15 @@
 import Advent
 import Data.Char(digitToInt)
-import Data.String (lines)
 
 solve :: [Int] -> Int
-solve = solve_i . pairsHalf
-
-solve_i ((x, y):xs) = if x+y == 2020 then x*y else solve_i xs
+solve = solve' . pairsHalf where
+  solve' ((x, y):xs) | x + y == 2020 = x * y
+  solve' ((x, y):xs) | otherwise     = solve' xs
 
 solve2 :: [Int] -> Int
-solve2 = solve2_i . triplesHalf
-
-solve2_i ((x, y, z):xs) = if x+y+z == 2020 then x*y*z else solve2_i xs
-
+solve2 = solve2' . triplesHalf where
+  solve2' ((x, y, z):xs) | x + y + z == 2020 = x * y * z
+  solve2' ((x, y, z):xs) | otherwise         = solve2' xs
 
 main :: IO ()
 main = execute 1 readIntLines [
