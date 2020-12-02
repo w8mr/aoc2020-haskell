@@ -6,3 +6,4 @@
 *.o
 *.hi
 dl.sh
+input/day99.txt
