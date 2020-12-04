@@ -12,9 +12,8 @@ splitInput line = (low, high, letter, password) where
 isValid (low, high, letter, password) = low <= count && count <= high where
   count = length (filter (==letter) password)
 
-isValid2 (low, high, letter, password) = (match1 || match2) && (not (match1 && match2)) where
-  match1 = password !! (low - 1) == letter
-  match2 = password !! (high - 1) == letter
+isValid2 (low, high, letter, password) = match low /= match high where
+  match n = password !! (n - 1) == letter
 
 solve f = length . (filter f) . (map splitInput)
 
