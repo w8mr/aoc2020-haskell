@@ -2,10 +2,9 @@ import Advent
 import Data.List (sort)
 
 convert :: [Char] -> Int
-convert = go 0 where
-  go :: Int -> [Char] -> Int
-  go c       [] = c
-  go c (x:xs) = go (2 * c + b x) xs where
+convert = foldl go 0 where
+  go :: Int -> Char -> Int
+  go c x = 2 * c + b x where
     b 'R' = 1
     b 'B' = 1
     b 'L' = 0
