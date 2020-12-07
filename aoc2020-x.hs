@@ -1,3 +1,4 @@
+{-# Language OverloadedStrings #-}
 import Advent
 
 solve = id

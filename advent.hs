@@ -1,6 +1,30 @@
-module Advent (execute, executeString, readIntLines, readIntWords, readIntCells, readLines, readWords, readCells, pairsHalf, triplesHalf) where
+module Advent (execute,
+               executeString,
+               readIntLines,
+               readIntWords,
+               readIntCells,
+               readLines,
+               readWords,
+               readCells,
+               pairsHalf,
+               triplesHalf,
+               Parser,
+               anySingle,
+               satisfy,
+               char,
+               decimal,
+               many,
+               number,
+               parseLines) where
 
 import Data.List (tails)
+import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe)
+import Text.Megaparsec.Char (char)
+import Text.Megaparsec.Char.Lexer (decimal, signed)
+import Control.Applicative (many)
+import Data.Void
+import Data.Maybe (fromJust)
+
 
 readDayInput :: Int -> IO (String)
 readDayInput day = readFile ("input/day" ++ show day ++ ".txt")
@@ -42,3 +66,17 @@ pairsHalf xs = [(x,y) | (x:ys) <- tails xs, y <- ys]
 triplesHalf :: [a] -> [(a, a, a)]
 triplesHalf xs = [(x,y,z) | (x:ys) <- tails xs, (y:zs) <- tails ys, z <- zs]
 
+
+-- | Based on Advent util by glguy
+type Parser = Parsec Void String
+
+parseLines :: Parser a -> String -> [a]
+parseLines format = map (fromJust . parseMaybe format) . lines
+
+parseInput :: Parser a -> String -> a
+parseInput format = fromJust . parseMaybe format
+
+
+-- | Parse a signed integral number
+number :: Integral a => Parser a
+number = signed (return ()) decimal
