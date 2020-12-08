@@ -12,14 +12,16 @@ module Advent (execute,
                anySingle,
                satisfy,
                char,
+               letterChar,
                decimal,
                many,
                number,
+               eof,
                parseLines) where
 
 import Data.List (tails)
-import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe)
-import Text.Megaparsec.Char (char)
+import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe, eof)
+import Text.Megaparsec.Char (char, letterChar)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 import Control.Applicative (many)
 import Data.Void
