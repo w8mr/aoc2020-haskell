@@ -17,10 +17,13 @@ module Advent (execute,
                many,
                number,
                eof,
-               parseLines) where
+               sepBy,
+               manyTill,
+               parseLines,
+               parseInput) where
 
 import Data.List (tails)
-import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe, eof)
+import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe, eof, sepBy, manyTill)
 import Text.Megaparsec.Char (char, letterChar)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 import Control.Applicative (many)
