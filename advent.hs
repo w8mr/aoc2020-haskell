@@ -1,11 +1,5 @@
 module Advent (execute,
                executeString,
-               readIntLines,
-               readIntWords,
-               readIntCells,
-               readLines,
-               readWords,
-               readCells,
                pairsHalf,
                triplesHalf,
                Parser,
@@ -16,6 +10,9 @@ module Advent (execute,
                decimal,
                many,
                number,
+               (<|>),
+               try,
+               parseTest,
                eof,
                sepBy,
                manyTill,
@@ -23,12 +20,12 @@ module Advent (execute,
                parseInput) where
 
 import Data.List (tails)
-import Text.Megaparsec (Parsec, anySingle, satisfy, parseMaybe, eof, sepBy, manyTill)
+import Data.Void (Void)
+import Data.Maybe (fromJust)
+import Control.Applicative (many, (<|>))
+import Text.Megaparsec (Parsec, parseTest, anySingle, satisfy, parseMaybe, try, eof, sepBy, manyTill)
 import Text.Megaparsec.Char (char, letterChar)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
-import Control.Applicative (many)
-import Data.Void
-import Data.Maybe (fromJust)
 
 
 readDayInput :: Int -> IO (String)
@@ -46,31 +43,11 @@ execute day preall parts = execute' preall parts <$> readDayInput day >>= putStr
 executeString :: Show b => String -> (String -> a) -> [(a -> b)] -> String
 executeString text preall parts = execute' preall parts text
 
-readIntLines :: String -> [Int]
-readIntLines = map read . lines
-
-readIntWords :: String -> [Int]
-readIntWords = map read . words
-
-readIntCells :: String -> [[Int]]
-readIntCells = map (map read . words) . lines
-
-readLines :: String -> [String]
-readLines = lines
-
-readWords :: String -> [String]
-readWords = words
-
-readCells :: String -> [[String]]
-readCells = map words . lines
-
-
 pairsHalf :: [a] -> [(a, a)]
 pairsHalf xs = [(x,y) | (x:ys) <- tails xs, y <- ys]
 
 triplesHalf :: [a] -> [(a, a, a)]
 triplesHalf xs = [(x,y,z) | (x:ys) <- tails xs, (y:zs) <- tails ys, z <- zs]
-
 
 -- | Based on Advent util by glguy
 type Parser = Parsec Void String
@@ -80,7 +57,6 @@ parseLines format = map (fromJust . parseMaybe format) . lines
 
 parseInput :: Parser a -> String -> a
 parseInput format = fromJust . parseMaybe format
-
 
 -- | Parse a signed integral number
 number :: Integral a => Parser a
