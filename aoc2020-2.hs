@@ -1,6 +1,5 @@
 {-# Language OverloadedStrings #-}
 import Advent
-import Data.List.Split (splitOn)
 
 format :: Parser (Int, Int, Char, String)
 format = (,,,) <$> number <* "-" <*> number <* " " <*> anySingle <* ": " <*> many anySingle
