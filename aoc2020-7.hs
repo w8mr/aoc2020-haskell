@@ -14,27 +14,20 @@ parse line = (bag, inner) where
   (bag, contents) = parseLine line
   inner = map parseBag $ parseContents contents
 
-
-canContainShinyGold :: [(String, [(Int, String)])] -> String -> Bool
-canContainShinyGold allBags bagColor = go (lookup bagColor allBags) where
-  go :: Maybe [(Int, String)] -> Bool
+canContain :: [(String, [(Int, String)])] -> String -> String -> Bool
+canContain bags innerColor outerColor = go (lookup outerColor bags) where
   go Nothing = False
-  go (Just []) = False
-  go (Just inner) = if any ((=="shiny gold") . snd) inner
+  go (Just inner) = if any ((==innerColor) . snd) inner
                                then True
-                               else any ((canContainShinyGold allBags). snd) inner
+                               else any ((canContain bags innerColor). snd) inner
 
 solve1 :: [([Char], [(Int, [Char])])] -> Int
-solve1 bags = length $ filter ((canContainShinyGold bags) . fst) bags
-
-
+solve1 bags = length $ filter ((canContain bags "shiny gold") . fst) bags
 
 countBags :: String -> [(String, [(Int, String)])] -> Int
-countBags bagColor allBags = go (lookup bagColor allBags) where
-  go :: Maybe [(Int, String)] -> Int
+countBags bagColor bags = go (lookup bagColor bags) where
   go Nothing = 0
-  go (Just []) = 0
-  go (Just inner) = 1 + (sum $ map (\(cnt, clr) -> cnt * countBags clr allBags ) inner)
+  go (Just inner) = 1 + (sum $ map (\(cnt, clr) -> cnt * countBags clr bags ) inner)
 
 solve2 :: [([Char], [(Int, [Char])])] -> Int
 solve2 bags = (countBags "shiny gold" bags) - 1
