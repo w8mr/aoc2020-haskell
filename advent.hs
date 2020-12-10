@@ -2,6 +2,7 @@ module Advent (execute,
                executeString,
                pairsHalf,
                triplesHalf,
+               count,
                Parser,
                anySingle,
                satisfy,
@@ -49,6 +50,8 @@ pairsHalf xs = [(x,y) | (x:ys) <- tails xs, y <- ys]
 triplesHalf :: [a] -> [(a, a, a)]
 triplesHalf xs = [(x,y,z) | (x:ys) <- tails xs, (y:zs) <- tails ys, z <- zs]
 
+count :: (a -> Bool) -> [a] -> Int
+count f = length . (filter f)
 -- | Based on Advent util by glguy
 type Parser = Parsec Void String
 

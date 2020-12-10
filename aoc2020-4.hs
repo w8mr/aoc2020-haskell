@@ -25,7 +25,7 @@ checkPassportId (key,value) = key /= "pid" || (all isDigit value && length value
 checkHeight (key,value) = key /= "hgt" || (unit == "in" && between val 59 76) || (unit == "cm" && between val 150 193) where
   (val, unit) = splitAt ((length value) - 2) value
 
-solve checks = length . filter (isValid checks) where
+solve checks = count (isValid checks) where
   isValid checks xs = ((==7) . length ) $
            foldr filter xs checks
 

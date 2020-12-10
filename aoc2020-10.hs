@@ -1,24 +1,18 @@
-{-# Language OverloadedStrings #-}
 import Advent
-import Data.List (sort)
+import Data.List (sort, group)
 
-solve1 :: [Integer] -> Integer
-solve1 xs = go (sort (0:xs)) 0 0 where
-  go (x:[]) c1 c3 = c1 * (c3+1)
-  go (x:xs) c1 c3 | (x+1) `elem` xs = go xs (c1 + 1) c3
-                  | (x+2) `elem` xs = go xs c1 c3
-                  | (x+3) `elem` xs = go xs c1 (c3 + 1)
+diffs :: (Num a, Ord a) => [a] -> [a]
+diffs input = zipWith (-) (tail full) full where
+  sorted = sort input
+  full = 0 : sorted ++ [3 + last sorted]
 
-solve2 :: [Integer] -> Integer
-solve2 xs = (product . (map (go . sort)) . brk . sort) (0:xs) where
-  go (x:[]) = 1
-  go (x:xs) = p c where
-    p n = sum [go (drop (i-1) xs) | i <- [1..n]]
-    c = sum [fromEnum $ (x+i) `elem` xs | i <- [1..3]]
-  brk = go [] [] where
-    go a1 a2 (x:[]) = ((x:a2):a1)
-    go a1 a2 (x:y:xs) | x+3 == y  = go ((x:a2):a1) [x] (y:xs)
-                      | otherwise = go a1 (x:a2) (y:xs)
+solve1 :: [Integer] -> Int
+solve1 input = count (==1) d * count (==3) d where d = diffs input
+
+solve2 :: [Integer] -> Int
+solve2 input = (product . map (tribonacci . length) . filter ((==1) . head) . group . diffs) input where
+  tribonacci x = [1,2,4,7] !! (x-1)
+
 main :: IO ()
 main = execute 10 (parseLines number) [
   solve1 ,
