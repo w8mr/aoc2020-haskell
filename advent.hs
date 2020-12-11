@@ -10,12 +10,16 @@ module Advent (execute,
                letterChar,
                decimal,
                many,
+               some,
+               optional,
                number,
                (<|>),
                try,
                parseTest,
                eof,
                sepBy,
+               sepBy1,
+               endBy,
                manyTill,
                parseLines,
                parseInput) where
@@ -23,8 +27,8 @@ module Advent (execute,
 import Data.List (tails)
 import Data.Void (Void)
 import Data.Maybe (fromJust)
-import Control.Applicative (many, (<|>))
-import Text.Megaparsec (Parsec, parseTest, anySingle, satisfy, parseMaybe, try, eof, sepBy, manyTill)
+import Control.Applicative (many, some, optional, (<|>))
+import Text.Megaparsec (Parsec, parseTest, anySingle, satisfy, parseMaybe, try, eof, sepBy, sepBy1, endBy, manyTill)
 import Text.Megaparsec.Char (char, letterChar)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 
