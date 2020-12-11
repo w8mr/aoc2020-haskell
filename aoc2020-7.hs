@@ -1,38 +1,39 @@
+{-# Language OverloadedStrings #-}
 import Advent
 import Data.List (intercalate)
 import Data.List.Split (splitOn)
 
-parseLine line = (bag, contents) where
-  (bag:contents:[]) = splitOn " bags contain " line
+type Bag = String
+type Rule = (Bag, [(Int, Bag)])
 
-parseContents = splitOn ", " . init
+bag :: Parser Bag
+bag = some letterChar <> " " <> some letterChar <* " bag" <* optional "s"
 
-parseBag bag = (if amount == "no" then 0 else read amount :: Int, intercalate " " color) where
-  (amount:color) = (init . words) bag
+bags :: Parser (Int, Bag)
+bags = (,) <$> decimal <* " " <*> bag
 
-parse line = (bag, inner) where
-  (bag, contents) = parseLine line
-  inner = map parseBag $ parseContents contents
+contents :: Parser [(Int, Bag)]
+contents = [] <$ "no other bags" <|> bags `sepBy1` ", "
 
-canContain :: [(String, [(Int, String)])] -> String -> String -> Bool
+rule :: Parser Rule
+rule = (,) <$> bag <* " contain " <*> contents <* "."
+
+canContain :: [Rule] -> Bag -> Bag -> Bool
 canContain bags innerColor outerColor = go (lookup outerColor bags) where
-  go Nothing = False
-  go (Just inner) = if any ((==innerColor) . snd) inner
-                               then True
-                               else any ((canContain bags innerColor). snd) inner
+  go (Just inner) = any ((==innerColor) . snd) inner ||
+                    any ((canContain bags innerColor) . snd) inner
 
-solve1 :: [([Char], [(Int, [Char])])] -> Int
+solve1 :: [Rule] -> Int
 solve1 bags = length $ filter ((canContain bags "shiny gold") . fst) bags
 
-countBags :: String -> [(String, [(Int, String)])] -> Int
+countBags :: Bag -> [Rule] -> Int
 countBags bagColor bags = go (lookup bagColor bags) where
-  go Nothing = 0
-  go (Just inner) = 1 + (sum $ map (\(cnt, clr) -> cnt * countBags clr bags ) inner)
+  go (Just inner) = sum $ map (\(cnt, clr) -> cnt * (1 + countBags clr bags) ) inner
 
-solve2 :: [([Char], [(Int, [Char])])] -> Int
-solve2 bags = (countBags "shiny gold" bags) - 1
+solve2 :: [Rule] -> Int
+solve2 bags = (countBags "shiny gold" bags)
 
 main :: IO ()
-main = execute 7 (map parse . lines) [
+main = execute 7 (parseLines rule) [
   solve1 ,
   solve2  ]
