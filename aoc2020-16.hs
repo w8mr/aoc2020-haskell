@@ -4,6 +4,7 @@ import Data.List (union, intersect, sort, sortBy, groupBy, (\\))
 import Data.List.Split (splitOn)
 import Data.Ord (comparing)
 import Text.Megaparsec.Char (spaceChar)
+import Data.Maybe (mapMaybe)
 
 --class: 1-3 or 5-7
 --row: 6-11 or 33-44
@@ -18,47 +19,40 @@ import Text.Megaparsec.Char (spaceChar)
 --55,2,20
 --38,6,12
 
-type Field = (String,Int,Int,Int,Int)
+type Rule = (String,Int,Int,Int,Int)
 type Ticket = [Int]
 
-fField :: Parser Field
-fField = (,,,,) <$> many (letterChar <|> spaceChar) <* ": " <*> decimal <* "-" <*> decimal <* " or " <*> decimal <* "-" <*> decimal <* "\n"
+fRule :: Parser Rule
+fRule = (,,,,) <$> many (letterChar <|> spaceChar) <* ": " <*> decimal <* "-" <*> decimal <* " or " <*> decimal <* "-" <*> decimal <* "\n"
 
-fFields :: Parser [Field]
-fFields = fField `manyTill` "\n"
+fRules :: Parser [Rule]
+fRules = fRule `manyTill` "\n"
 
 fTicket :: Parser Ticket
 fTicket = decimal `sepBy` "," <* "\n"
 
-format :: Parser ([Field], Ticket, [Ticket])
-format = (,,) <$> fFields <* "your ticket:\n" <*> fTicket  <* "\nnearby tickets:\n" <*> many fTicket
+format :: Parser ([Rule], Ticket, [Ticket])
+format = (,,) <$> fRules <* "your ticket:\n" <*> fTicket  <* "\nnearby tickets:\n" <*> many fTicket
 
-allowedInField (name, l1,h1,l2,h2) = concat [[l1..h1],[l2..h2]]
-allowedInFields fields = foldl1 union ((map allowedInField) fields)
+invalid :: Int -> Rule -> Bool
+invalid field (name,l1,h1,l2,h2) = (field < l1 || h1 < field) && (field < l2 || h2 < field)
 
-invalidNumbers allowed tickets = filter (not . ((flip elem) allowed)) tickets
-solve1 (fields, your, nearby) = sum $ concatMap (invalidNumbers (allowedInFields fields)) nearby
+allInvalid :: [Rule] -> Int -> Bool
+allInvalid rules field = all (invalid field) rules
 
-valid allowed tickets = filter (all ((flip elem) allowed)) tickets
+solve1 :: ([Rule], Ticket, [Ticket]) -> Int
+solve1 (rules, your, nearby) = sum $ concatMap (mapMaybe (\field -> if allInvalid rules field then Just field else Nothing )) nearby
 
-possibleFieldIndexes f_i field tickets = concat $ filter ((>0). length) $ map (\(t_i, t) -> map (\x -> (f_i,fst x)) $ filter (\(i,n) -> not $ n `elem` (allowedInField field)) (zip [1..] t)) (zip [1..] tickets)
-
-solve2 :: ([Field], Ticket, [Ticket]) -> Int
-solve2 (fields, your, nearby) = product s where
-  s = map (\x -> your !! ((snd x)-1)) q
-  q= filter ((=="departure") . head . (splitOn " ") . fst) i
-  i = snd $ foldl (\(used, found) (name, pos) -> let avail = head $ pos \\ used in ((avail:used), ((name, avail):found) )) ([], []) validPositions
-  validPositions = sortBy (comparing (length . snd)) $ map (\(name, pos) -> (name, [1..20] \\ pos)) invalidPositions
-  invalidPositions = map (\x -> (fst $ head x, sort $ map snd x)) $ groupBy grp invalidFields
-  invalidFields = concat $ map (\(f_i, field@(name,_,_,_,_)) -> possibleFieldIndexes name field validTickets) (zip [1..] fields)
-  validTickets = valid (allowedInFields fields) (nearby ++ [your])
-
-sortGT (a1, c1) (a2, c2)
-  | a1 < a2 = LT
-  | a1 > a2 = GT
-  | a1 == a2 = compare c1 c2
-
-grp (a1, c1) (a2, c2) = a1 == a2
+--solve2 :: ([Rule], Ticket, [Ticket]) -> Int
+solve2 (rules, your, nearby) = product yourValues where
+  allValidTickets = filter (not . any (allInvalid rules)) (your:nearby)
+  invalidFieldsByTicket = map (map (\field -> mapMaybe (\rule@(name,_,_,_,_) -> if invalid field rule then Just name else Nothing) rules )) allValidTickets
+  invalidFieldsByIndex = foldl (\acc ticket -> map (uncurry union) $ zip acc ticket ) (replicate (length invalidFieldsByTicket) []) invalidFieldsByTicket
+  ruleNames = map (\(name,_,_,_,_) -> name) rules
+  validFieldsByIndex = sortBy (comparing (length.snd)) $ zip [0..19] $ map ((\\) ruleNames) invalidFieldsByIndex
+  fieldByIndex = snd $ foldl (\(used, found) (idx, pos) -> let avail = head $ pos \\ used in ((avail:used), ((idx, avail):found) )) ([], []) validFieldsByIndex
+  departureFields = filter ((=="departure") . head . (splitOn " ") . snd) fieldByIndex
+  yourValues = map (\x -> your !! (fst x)) departureFields
 
 
 main :: IO ()
