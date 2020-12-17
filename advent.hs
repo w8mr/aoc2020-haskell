@@ -24,7 +24,7 @@ module Advent (execute,
                parseLines,
                parseInput) where
 
-import Data.List (tails)
+import Data.List (tails,intersect,union)
 import Data.Void (Void)
 import Data.Maybe (fromJust)
 import Control.Applicative (many, some, optional, (<|>))
@@ -56,6 +56,14 @@ triplesHalf xs = [(x,y,z) | (x:ys) <- tails xs, (y:zs) <- tails ys, z <- zs]
 
 count :: (a -> Bool) -> [a] -> Int
 count f = length . (filter f)
+
+union' :: Eq a => [[a]] -> [a]  --- Move to Advent
+union' = foldr union []
+
+intersect' :: Eq a => [[a]] -> [a]  --- Move to Advent
+intersect' = foldr1 intersect
+
+
 -- | Based on Advent util by glguy
 type Parser = Parsec Void String
 
