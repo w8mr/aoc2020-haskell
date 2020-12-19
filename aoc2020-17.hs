@@ -1,13 +1,32 @@
 {-# Language OverloadedStrings #-}
 import Advent
 import Data.Maybe(fromMaybe,mapMaybe)
-import Data.List(minimumBy, maximumBy,intercalate)
+import Data.List(minimumBy, maximumBy,intercalate,find)
 import Data.Ord(comparing)
 
 type Grid2d = [[Char]]
 type Grid4d = [(Int,[(Int,[(Int,[Int])])])]
 type Coord = (Int,Int,Int,Int)
 type Cell = (Coord, Bool)
+
+data Range = Range Int Int deriving (Eq, Show)
+-- Sparse multi dimensional grid
+data MultiGrid a = MultiGrid { dimensions :: [Range]
+                             , sparse :: a
+                             , content :: [MultiGridData a] } deriving (Eq, Show)
+data MultiGridData a = Grid Int [MultiGridData a]
+                     | Cell Int a deriving (Eq, Show)
+
+t = MultiGrid [Range 0 1, Range 0 1] False
+              [Grid 0 [Cell 0 True, Cell 1 True]
+              ,Grid 1 [Cell 0 True, Cell 1 True]] :: MultiGrid Bool
+
+type MultiCoord = [Int]
+mapWithCoordinates :: (Eq a, Show a, Eq b, Show b) => (MultiCoord -> a -> a vcxz) -> MultiGrid a -> MultiGrid b
+mapWithCoordinates f (MultiGrid dimensions sparse c1) = (MultiGrid dimensions sparse (go dimensions [] c1)) where
+  go :: [Range] -> MultiCoord -> [MultiGridData a] -> [MultiGridData b]
+  go ((Range l h):[]) crd cnt = [Cell i c' | i <- [l..h], let Cell _ c = fromMaybe (Cell i sparse) $ find (\(Cell idx _) -> i == idx) cnt, let c' = f (reverse crd) c, (/=sparse) c']
+  go ((Range l h):rs) crd cnt = [Grid i c' | i <- [l..h], let Grid _ c = fromMaybe (Grid i []) $ find (\(Grid idx _) -> i == idx) cnt, let c' = go rs (i:crd) c, null c']
 
 minimum' [] = 0
 minimum' x = minimum x
