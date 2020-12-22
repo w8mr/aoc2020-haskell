@@ -33,39 +33,21 @@ parser1 s = head $ go s [Empty] where
 parser2 :: String -> Calc
 parser2 s = snd $ go (s,Empty) where
   go ([]      , st)                                    = ([], st)
- -- go ((' ':xs), (Number _))                            = error "Space not allowed in number"
   go ((' ':xs), st)                                    = go (xs, st)
+  go ((x  :xs), Empty)                     | isDigit x = go (xs, Number (digitToInt x))
+  go ((x  :xs), Number n)                  | isDigit x = go (xs, Number (n * 10 + (digitToInt x)))
+  go ((x  :xs), Operator o st Empty)       | isDigit x = go (xs, Operator o st (Number (digitToInt x)))
+  go ((x  :xs), Operator o st (Number n))  | isDigit x = go (xs, Operator o st (Number (n * 10 + (digitToInt x))))
 
-  go ((x  :xs), Empty)                         | isDigit x = go (xs, Number (digitToInt x))
-  go ((x  :xs), Number n)                      | isDigit x = go (xs, Number (n * 10 + (digitToInt x)))
-  go ((x  :xs), Operator o st Empty)     | isDigit x = go (xs, Operator o st (Number (digitToInt x)))
-  go ((x  :xs), Operator o st (Number n)) | isDigit x = go (xs, Operator o st (Number (n * 10 + (digitToInt x))))
-
-  go ((x  :xs), Operator o st Empty)                  | x == '('  = go (xs', (Operator o st st'))  where
-                                                                        (xs', st') = go (xs, Empty)
-  go ((x  :xs), Empty)                        | x == '('  = go (go (xs, Empty))
+  go ((x  :xs), Empty)                     | x == '('  = go (go (xs, Empty))
+  go ((x  :xs), Operator o st Empty)       | x == '('  = go (xs', (Operator o st st'))  where (xs', st') = go (xs, Empty)
   go ((x  :xs), st)                        | x == ')'  = (xs, st)
-  go ((x  :xs), Operator Product st Empty) | x == '+'  = go (xs', (Operator Product st st'))  where
-    (xs', st') = go (xs, (Operator Sum st Empty))
-  --go (x   :xs), Operator Sum st Empty)     | x == '+'  = go (xs, Operator Sum st st'))  where
-  go ((x  :xs), st)                        | x == '+'  = go (go (xs, Operator Sum st Empty))
-  go ((x  :xs), st)          | x == '*'  = go (xs', (Operator Product st st'))  where
-    (xs', st') = go (xs, Empty)
-  go ((x  :xs), st)                        | x == '*'  = go (xs,Operator Product st Empty) where
-     (st', xs') = go (xs, Empty)
+
+  go ((x  :xs), st)                        | x == '+'  = go (xs, Operator Sum st Empty)
+  go ((x  :xs), st)                        | x == '*'  = (xs', (Operator Product st st')) where (xs', st') = go (xs, Empty)
   go ((x  :_ ), st)                                    = error ("Charater not allowed: "++(show x)++" Stack: "++ (show st))
-
--- 1 + 2 * 3 + 4 * 5 + 6
--- E                    1
--- 1                    +
--- + 1 E                2
--- + 1 2                * recurse X
--- * + 1 2 X     E      3
--- * + 1 2 E     3      + higher
--- * + 1 2 E     + 3 E    4
--- * + 1 2 + 3 4    +
-
---test :: [IO ()]
+--           ("(2 * (3 * 4) + 5) + 6",40),
+test :: IO [()]
 test = do
   let tests = [("1", 1),
            ("12", 12),
@@ -76,12 +58,21 @@ test = do
            ("1*2+3*4", 20),
            ("(1)",1),
            ("1+(2*3)+4",11),
-           ("((1) * (1 + 2 * 8 + 4) + 5)",17),
+           ("1 + 1 * 1 + 1 + 1",6),
+           ("(1 + 1 * 1 + 1) + 1",5),
+           ("((1) * (1 + 2 * 8 + 4) + 5)",41),
+           ("((1) * (1 + 2 * 8 + 4))",36),
            ("1 + (2 * 3) + (4 * (5 + 6))",51),
            ("2 * 3 + (4 * 5)",46),
            ("5 + (8 * 3 + 9 + 3 * 4 * 3)",1445),
            ("5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))",669060),
            ("((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2",23340),
+           ("((6 * 9) * (15 * 14) + 6) + 2 + 4 * 2",23340),
+           ("((54) * (15 * 14) + 6) + 2 + 4 * 2",23340),
+           ("(54 * (15 * 14) + 6) + 2 + 4 * 2",23340),
+           ("(54 * (15 * 14) + 6) + 6 * 2",23340),
+           ("(54 * (15 * 14) + 6) + 6",11670),
+           ("(2 * (3 * 4) + 5) + 6",40),
            ("", 0)] :: [(String, Int)]
   let results = map (\(test, expected) -> let parsed = parser2 test; actual = calc parsed in (expected, actual, test, parsed)) tests
   forM (filter (\(e,a,_,_) -> e /= a) results) (\(expected, actual, test, parsed) -> do
