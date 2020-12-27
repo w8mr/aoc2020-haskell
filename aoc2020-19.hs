@@ -1,52 +1,67 @@
 {-# Language OverloadedStrings #-}
 import Advent
 import Text.Megaparsec (someTill, lookAhead)
-import Data.List (nub)
+import Data.List (find, sortBy, minimumBy, maximumBy)
+import Data.Map (fromList,insert, assocs)
+import qualified Data.Map as M
+import Data.Maybe (fromMaybe, isJust)
+import Data.Ord (comparing)
 
-data Rule = Letter Int Char | Number Int [[Int]] deriving (Eq, Show)
+type IndexedRule = (Int, Rule)
+type LoebArray = [String -> [Maybe String]]
+data Rule = Letter Char | Number [[Int]] deriving (Eq, Show)
 
-fRule :: Parser Rule
-fRule = (try fLetterRule) <|> (try fNumberRule)
+fRule :: Parser IndexedRule
+fRule = (,) <$> decimal <* ": " <*> (fLetterRule <|> fNumberRule)
 fNumberList :: Parser [Int]
 fNumberList = (decimal <* (optional " ")) `someTill` ("| " <|> (lookAhead "\n"))
 fNumberRule :: Parser Rule
-fNumberRule = Number <$> decimal <* ": " <*> many fNumberList <* "\n"
+fNumberRule = Number <$> many fNumberList <* "\n"
 fLetterRule :: Parser Rule
-fLetterRule = Letter <$> decimal <* ": \"" <*> letterChar <* "\"\n"
+fLetterRule = Letter <$ "\"" <*> letterChar <* "\"\n"
 
-format :: Parser ([Rule],[String])
-format = (,) <$> fRule `manyTill` "\n" <*> many (letterChar `manyTill` "\n")
+format :: Parser ([IndexedRule],[String])
+format = (,) <$> fRule `manyTill` "\n" <*> (many letterChar) `sepBy` "\n"
 
-findRule :: Int -> [Rule] -> Maybe Rule
-findRule n (rule@(Letter i _):rules) | n == i = Just rule
-findRule n (rule@(Number i _):rules) | n == i = Just rule
-findRule _ (_:[]) = Nothing
-findRule n (_:rules) = findRule n rules
+loeb :: Functor f => f (f a -> a) -> f a
+loeb = moeb fmap
 
+-- | 'loeb' generalized over 'fmap'
+moeb :: (((a -> b) -> b) -> c -> a) -> c -> a
+moeb f = \x -> let go = f ($ go) x in go
 
-replaceRule :: Rule -> [Rule] -> [Rule]
-replaceRule replace rules = go rules [] where
-  idx (Letter i _) = i
-  idx (Number i _) = i
-  i' = (idx replace)
-  go [] acc = acc
-  go (rule:rules) acc | idx rule == i'   = go rules (replace:acc)
-  go (rule:rules) acc                    = go rules (rule:acc)
+matchLetter :: Char -> LoebArray -> String -> [Maybe String]
+matchLetter c _ [] = [Nothing]
+matchLetter c _ (x:xs) = [if x == c then Just xs else Nothing]
 
-parseRule :: [Rule] -> Int -> [String]
-parseRule rules n = go (findRule n rules) where
-  go Nothing = []
-  go (Just (Letter _ c)) = ([c]:[])
-  go (Just (Number _ numbers)) = concatMap ( (map concat) . mult . map ((parseRule rules))) numbers
+matchAltSubRules :: [[Int]] -> LoebArray -> String -> [Maybe String]
+matchAltSubRules [] _ xs = [Just xs]
+matchAltSubRules nns rules xs = concatMap (matchSubRules rules xs) nns where
+  matchSubRules :: LoebArray -> String -> [Int] -> [Maybe String]
+  matchSubRules _ xs [] = [Just xs]
+  matchSubRules rules xs (n:ns) = concatMap evaluate $ matchRule rules xs n where
+    matchRule rules xs n = (rules !! n) xs
+    evaluate (Just ys) = matchSubRules rules ys ns
+    evaluate Nothing = [Nothing]
 
-mult :: [[a]] -> [[a]]
-mult (xs:[]) = [ [x] | x<- xs ]
-mult (xs:xss) = [ (x:ys) | x <- xs, ys <- mult xss ]
+match :: LoebArray -> Int -> String -> Bool
+match rules n xs = any isMatch $ matchAltSubRules [[n]] rules xs where
+  isMatch (Just "") = True
+  isMatch _ = False
 
-solve (rules, messages) = count (`elem` messages) $ parseRule rules 0
+solve :: ([IndexedRule],[String]) -> Int
+solve (rules, messages) = count (match (loeb loebArray) 0) messages where
+  loebArray = [la rule | idx <- [0..(maximum $ map fst rules)], let rule = lookup idx rules ] where
+    la (Just (Letter c)) = matchLetter c
+    la (Just (Number nums)) = matchAltSubRules nums
+    la Nothing = matchAltSubRules []
 
-solve1 = solve
-solve2 = solve1
+solve1 (rules, messages) = solve (rules, messages)
+solve2 (rules, messages) = solve (map replace rules, messages) where
+  replace rule@(idx, _) = fromMaybe rule $ find ((==idx) . fst) [
+    (8, (Number [[42], [42, 8]])),
+    (11, (Number [[42, 31], [42, 11, 31]]))
+    ]
 
 main :: IO ()
 main = execute 19 (parseInput format) [
