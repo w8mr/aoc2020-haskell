@@ -128,25 +128,3 @@ main :: IO ()
 main = execute 20 (parseInput format) [
   solve1 ,
   solve2  ]
-
-
-pr = putStrLn . intercalate "\n" . map (intercalate " ")
-
-tile2311 = Tile {tnumber = 2311, array = [[False,False,True,True,False,True,False,False,True,False],[True,True,False,False,True,False,False,False,False,False],[True,False,False,False,True,True,False,False,True,False],[True,True,True,True,False,True,False,False,False,True],[True,True,False,True,True,False,True,True,True,False],[True,True,False,False,False,True,False,True,True,True],[False,True,False,True,False,True,False,False,True,True],[False,False,True,False,False,False,False,True,False,False],[True,True,True,False,False,False,True,False,True,False],[False,False,True,True,True,False,False,True,True,True]]}
-
-ptile1951 = PTile {pnumber = 1951, edges = [498,177,587,710,841,564,318,397]}
-
-ptiles = [PTile {pnumber = 2311, edges = [89,924,318,210,498,231,616,300]},PTile {pnumber = 1951, edges = [498,177,587,710,841,564,318,397]},PTile {pnumber = 1171, edges = [288,96,391,966,902,24,18,399]},PTile {pnumber = 1427, edges = [234,300,9,948,576,210,348,183]},PTile {pnumber = 1489, edges = [18,183,689,848,565,948,288,43]},PTile {pnumber = 2473, edges = [116,348,399,542,966,234,184,481]},PTile {pnumber = 2971, edges = [565,680,78,161,456,85,689,532]},PTile {pnumber = 2729, edges = [576,397,962,85,271,710,9,680]},PTile {pnumber = 3079, edges = [264,116,89,702,616,184,66,501]}]
-
-q = [
-  [True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True ],
-  [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False],
-  [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False],
-  [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True, False,False,False],
-  [False,False,True, False,False,False,False,True, True, False,False,False,False,True, True, False,False,False,False,True, True, True ,False,False],
-  [False,False,False,True, False,False,True, False,False,True, False,False,True, False,False,True, False,False,True, False,False,False,False,False]]
-
-r = [
-  [False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True, False],
-  [True, False,False,False,False,True, True, False,False,False,False,True, True, False,False,False,False,True, True, True ],
-  [False,True, False,False,True, False,False,True, False,False,True, False,False,True, False,False,True, False,False,False]]
